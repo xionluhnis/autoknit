@@ -42,3 +42,10 @@ console.log(list); // the list of transfers
 ]
 */
 ``` 
+
+## Arguments to `plan_transfers`
+
+* `from` (**required** `[n1, n2, ... nn]`) is an array of knitout needle strings in CCW orientation (as a cycle)
+* `to` (**required** `[m1, m2, ... mn]`) is a similar array (must have the same size)
+* `slack` (*optional*) either a minimum slack number, or an array of slack numbers for each needle
+* `maxRacking` (*optional*) the maximum allowed racking
