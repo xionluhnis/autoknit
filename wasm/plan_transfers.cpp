@@ -13,6 +13,7 @@ struct TransferInput {
 
 typedef std::vector<Transfer> TransferOutput;
 
+static Constraints constr;
 static TransferInput input;
 static TransferOutput output;
 static std::string error;
@@ -21,11 +22,7 @@ extern "C" {
 
     // main transfer planning function
     EMSCRIPTEN_KEEPALIVE
-    uint8_t plan_cse_transfers(uint32_t max_racking){
-        // create constraints
-        Constraints constr;
-        constr.max_racking = max_racking;
-
+    uint8_t plan_cse_transfers(){
         // execute planning
         if(plan_transfers(constr, input.bed_from, input.bed_to, input.slacks, &output, &error)){
             return 1; // it worked!
@@ -71,7 +68,6 @@ extern "C" {
         input.bed_to.resize(needle_count);
         input.slacks.resize(needle_count);
     }
-    EMSCRIPTEN_KEEPALIVE
     BedNeedle::Bed side_to_bed(uint8_t side){
         switch(side){
             case 'f': return BedNeedle::Front;
@@ -81,7 +77,6 @@ extern "C" {
             default:  return BedNeedle::Front;
         }
     }
-    EMSCRIPTEN_KEEPALIVE
     uint8_t bed_to_side(BedNeedle::Bed bed){
         switch(bed){
             case BedNeedle::Front:          return 'f';
@@ -106,6 +101,22 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void set_slack(uint32_t needle_index, Slack slack){
         input.slacks[needle_index] = slack;
+    }
+    EMSCRIPTEN_KEEPALIVE
+    void set_max_racking(uint32_t racking){
+        constr.max_racking = racking;
+    }
+    EMSCRIPTEN_KEEPALIVE
+    void set_free_range(int32_t min, int32_t max){
+        constr.min_free = min;
+        constr.max_free = max;
+    }
+    EMSCRIPTEN_KEEPALIVE
+    void reset_free_range(){
+        set_free_range(
+            std::numeric_limits< int32_t >::min(),
+            std::numeric_limits< int32_t >::max()
+        );
     }
 
     // output reading functions

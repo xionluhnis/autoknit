@@ -1,2 +1,3 @@
 plan_transfers.wasm
 plan_transfers.js
+*.code-workspace

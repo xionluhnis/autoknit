@@ -7,23 +7,35 @@ class InvalidArgumentError extends Error {
         this.message = message;
     }
 }
+const sides = ['fs', 'F', 'f', 'bs', 'B', 'b'];
 function needleFrom(str){
     let side;
-    for(const s of ['fs', 'F', 'f', 'bs', 'B', 'b']){
-        if(str.startsWith(s)){
-            side = s;
-            str = str.substring(s.length);
-            break;
+    let offset;
+    if(typeof str === 'string'){
+        for(const s of sides){
+            if(str.startsWith(s)){
+                side = s;
+                str = str.substring(s.length);
+                break;
+            }
         }
+        if(!side || side.length === 0)
+            throw new InvalidArgumentError('Invalid needle side: ' + str);
+        else if(side.length === 2)
+            side = side.charAt(0).toUpperCase();
+        offset = parseInt(str);
+    } else {
+        if(!Array.isArray(str) || str.length !== 2)
+            throw new InvalidArgumentError('Needles must either be strings or arrays of [str, number]');
+        side = str[0].charAt(0).toUpperCase();
+        offset = str[1];
     }
-    if(!side || side.length === 0)
-        throw new InvalidArgumentError('Invalid needle side: ' + str);
-    else if(side.length === 2)
-        side = side.charAt(0).toUpperCase();
-    let offset = parseInt(str);
+    if(typeof side !== 'string')
+        throw new InvalidArgumentError('Needle side is not a string: ' + side);
+    if(typeof offset !== 'number')
+        throw new InvalidArgumentError('Needle offset is not a number: ' + offset);
     return [side.charCodeAt(0), offset];
 }
-
 function knitoutNeedle(side, offset, asArray = false){
     const sstr = String.fromCharCode(side);
     switch(sstr){
@@ -38,11 +50,17 @@ function knitoutNeedle(side, offset, asArray = false){
     }
 }
 
-Module['plan_transfers'] = function plan_transfers(from, to, slack = 2, maxRacking = 4, needlesAsArray = false){
+Module['plan_transfers'] = function plan_transfers(from, to, params){
     if(!from.length)
         return [];
     if(from.length !== to.length)
         throw new InvalidArgumentError('From and to arguments must be arrays of the same length');
+    // default arguments
+    if(!params)
+        params = {};
+    const slack = params.slack || 2;
+    const max_racking = params.max_racking || 4;
+
     // create input
     xfer._allocate_input(from.length);
     for(let i = 0; i < from.length; ++i){
@@ -65,12 +83,27 @@ Module['plan_transfers'] = function plan_transfers(from, to, slack = 2, maxRacki
             throw new InvalidArgumentError('Slack must either be an integer, or an array of integers');
         xfer._create_default_slack(slack);
     }
+    // set bed constraints
+    xfer._set_max_racking(max_racking);
+    if('min_free' in params
+    || 'max_free' in params){
+        const min_free = params.min_free;
+        const max_free = params.max_free;
+        if(typeof min_free !== 'number' || typeof max_free !== 'number')
+            throw new InvalidArgumentError('min_free / max_free must both be provided or none, and both must be numbers');
+        if(min_free > max_free)
+            throw new InvalidArgumentError('min_free is larger than max_free');
+        xfer._set_free_range(min_free, max_free);
+    } else {
+        xfer._reset_free_range();
+    }
 
     // call wasm code
-    const res = xfer._plan_cse_transfers(maxRacking);
+    const res = xfer._plan_cse_transfers();
     if(!res){
         return null;
     } else {
+        const needles_as_array = !!params.needles_as_array;
         const xfers = [];
         // get transfer list
         const xferCount = xfer._get_output_size();
@@ -81,8 +114,8 @@ Module['plan_transfers'] = function plan_transfers(from, to, slack = 2, maxRacki
             const t_bed = xfer._get_transfer_to_bed(i);
             const t_off = xfer._get_transfer_to_offset(i);
             xfers.push([
-                knitoutNeedle(f_bed, f_off, needlesAsArray),
-                knitoutNeedle(t_bed, t_off, needlesAsArray)
+                knitoutNeedle(f_bed, f_off, needles_as_array),
+                knitoutNeedle(t_bed, t_off, needles_as_array)
             ]);
         }
         return xfers;

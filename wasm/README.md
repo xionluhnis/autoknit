@@ -22,9 +22,7 @@ const xfer = require('./plan_transfers.js');
 const list = xfer.plan_transfers(
     ['f0', 'f1', 'b1', 'b0'], // the needles of the source bed configuration (cycle must be CCW)
     ['f1', 'b1', 'b0', 'f0'], // the needles of the target bed configuration (cycle must be CCW)
-    2, // either a uniform minimum slack, or the array of slack numbers
-    2, // the maximum racking
-    false // whether to output transfer needles as strings (false => e.g. 'f1') or arrays (true => e.g. ['f', 1])
+    { slack: 2, max_racking: 2 } // additional parameters (all optional)
 );
 console.log(list); // the list of transfers
 /*
@@ -47,5 +45,47 @@ console.log(list); // the list of transfers
 
 * `from` (**required** `[n1, n2, ... nn]`) is an array of knitout needle strings in CCW orientation (as a cycle)
 * `to` (**required** `[m1, m2, ... mn]`) is a similar array (must have the same size)
-* `slack` (*optional*) either a minimum slack number, or an array of slack numbers for each needle
-* `maxRacking` (*optional*) the maximum allowed racking
+* `params` (*optional*) a set of parameters (slack, free range, max racking, and output mode)
+  * `slack` (defaults to 2) either a minimum slack number, or an array of slack numbers for each needle
+  * `max_racking` (defaults to 4) the maximum allowed racking
+  * `min_free` (defaults to -Infinity) the minimum needle available (requires `max_free` be provided too)
+  * `max_free` (defaults to +Infinity) the maximum needle available (requires `min_free` be provided too)
+  * `needles_as_array` (defaults to false) whether the needle outputs should be arrays `[side, offset]` (true) or strings (false)
+
+Here is an example with different parameters, but same beds:
+```js
+const xfer = require('./plan_transfers.js');
+
+const list = xfer.plan_transfers(
+    ['f0', 'f1', 'b1', 'b0'], // the needles of the source bed configuration (cycle must be CCW)
+    ['f1', 'b1', 'b0', 'f0'], // the needles of the target bed configuration (cycle must be CCW)
+    { min_free: 0, max_free: 10, needles_as_array: true }
+);
+console.log(list); // the list of transfers
+/*
+ Output:
+[
+  [ [ 'f', 0 ], [ 'bs', 1 ] ],
+  [ [ 'f', 1 ], [ 'b', 2 ] ],
+  [ [ 'bs', 1 ], [ 'f', 1 ] ],
+  [ [ 'b', 0 ], [ 'fs', 0 ] ],
+  [ [ 'b', 1 ], [ 'fs', 1 ] ],
+  [ [ 'b', 2 ], [ 'fs', 2 ] ],
+  [ [ 'fs', 1 ], [ 'b', 1 ] ],
+  [ [ 'fs', 2 ], [ 'b', 2 ] ],
+  [ [ 'fs', 0 ], [ 'b', 0 ] ],
+  [ [ 'b', 0 ], [ 'f', 0 ] ],
+  [ [ 'b', 1 ], [ 'fs', 0 ] ],
+  [ [ 'b', 2 ], [ 'fs', 1 ] ],
+  [ [ 'fs', 0 ], [ 'b', 0 ] ],
+  [ [ 'fs', 1 ], [ 'b', 1 ] ],
+  [ [ 'f', 0 ], [ 'bs', 0 ] ],
+  [ [ 'f', 1 ], [ 'bs', 1 ] ],
+  [ [ 'bs', 0 ], [ 'f', 0 ] ],
+  [ [ 'bs', 1 ], [ 'f', 1 ] ]
+]
+*/
+``` 
+
+As expected, none of the bed offsets are below 0 since the minimum free needle was set to that.
+Also, the output needles are arrays `[side, offset]` given that `needles_as_array` is true.
