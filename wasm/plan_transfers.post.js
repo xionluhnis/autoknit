@@ -49,8 +49,8 @@ function knitoutNeedle(side, offset, asArray = false){
             return asArray ? [null, offset] : '?' + offset;
     }
 }
-
-Module['plan_transfers'] = function plan_transfers(from, to, params){
+const xfer = Module;
+xfer.plan_transfers = function plan_transfers(from, to, params){
     if(!from.length)
         return [];
     if(from.length !== to.length)
@@ -85,8 +85,7 @@ Module['plan_transfers'] = function plan_transfers(from, to, params){
     }
     // set bed constraints
     xfer._set_max_racking(max_racking);
-    if('min_free' in params
-    || 'max_free' in params){
+    if('min_free' in params || 'max_free' in params){
         const min_free = params.min_free;
         const max_free = params.max_free;
         if(typeof min_free !== 'number' || typeof max_free !== 'number')

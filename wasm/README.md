@@ -6,7 +6,7 @@ This is done as a [WebAssembly](https://developer.mozilla.org/en-US/docs/WebAsse
 ## Steps
 
 1. Install the [emscripten](https://emscripten.org/docs/getting_started/downloads.html) environment.
-2. Compile the WASM module with `make all`
+2. Compile the WASM module with `make`
 
 The second step requires `em++` which is shipped with emscripten and should thus have been installed in the first step.
 
@@ -89,3 +89,8 @@ console.log(list); // the list of transfers
 
 As expected, none of the bed offsets are below 0 since the minimum free needle was set to that.
 Also, the output needles are arrays `[side, offset]` given that `needles_as_array` is true.
+
+## Modularize=1
+
+In case you need to generate the module as a function (to which you can pass the initial Module object),
+then simply call `make module` instead of the default `make`.

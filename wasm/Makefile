@@ -10,5 +10,8 @@ FLAGS=$(POST_JS) $(CPP_FLAGS) $(JS_SETTINGS)
 SOURCES=plan_transfers.cpp $(wildcard ../plan_transfer*.cpp)
 OUTPUT=plan_transfers.js
 
-all:
+default:
 	$(ENV_FLAGS) $(CPP_BIN) $(SOURCES) -o $(OUTPUT) $(FLAGS)
+
+module:
+	$(ENV_FLAGS) $(CPP_BIN) $(SOURCES) -o $(OUTPUT) $(FLAGS) -s MODULARIZE=1
